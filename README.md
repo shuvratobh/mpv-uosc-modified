@@ -1,13 +1,25 @@
-# MPV + UOSC Customized Setup
+# MPV: UOSC x Modern Z Edition
 
-This repository contains my personal heavily-customized setup for the [MPV media player](https://mpv.io/). It focuses on providing a modern, sleek interface with quality-of-life behavioral features tailored for an amazing viewing experience.
+This repository contains my personal, heavily-customized setup for the [MPV media player](https://mpv.io/). It brings together the powerful functionality of **UOSC** with the sleek, premium aesthetics of **Modern Z** to create the ultimate viewing experience.
+
+## 📸 Media Preview
+
+> **Note:** Please replace the `link-to-video.mp4` and `link-to-screenshot.png` below with the actual paths to your files once you upload them to the repository!
+
+### Video Playback
+<div align="center">
+  <video src="link-to-video.mp4" width="800" controls></video>
+</div>
+
+### UI Screenshot
+![UI Screenshot](link-to-screenshot.png)
 
 ## 🌟 Key Features
 
-### 🎨 Modernized UOSC Interface
-This setup runs on a highly modified fork of [uosc](https://github.com/tomasklaen/uosc):
+### 🎨 UOSC x Modern Z Combined Interface
+This setup runs on a highly modified fork of [uosc](https://github.com/tomasklaen/uosc), re-imagined with the design language of Modern Z:
 *   **Stunning Timeline:** A customized thin, rounded, and elegant timeline with a subtle hover-expansion animation, matching modern design aesthetics. It features a rich dark gradient shadow, floating rounded buttons, and minimalistic font styles.
-*   **Refined Control Layout:** Perfectly centered and symmetrical bottom controls using flawless iconography to mimic premium video platforms. All active states and button flashes are thoughtfully integrated into the primary color scheme.
+*   **Refined Control Layout:** Perfectly centered and symmetrical bottom controls using flawless Modern Z iconography to mimic premium video platforms. All active states and button flashes are thoughtfully integrated into the primary color scheme.
 *   **Enhanced UX & Menus:** Click anywhere seamlessly! Left or right-clicking outside of menus and playlists immediately dismisses them, keeping your view completely clear without relying solely on quick keyboard escapes.
 
 ### 🕒 Seamless History & Resume (SimpleHistory)
