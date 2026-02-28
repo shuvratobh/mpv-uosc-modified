@@ -6,13 +6,11 @@ This repository contains my personal, heavily-customized setup for the [MPV medi
 
 > **Note:** Please replace the `link-to-video.mp4` and `link-to-screenshot.png` below with the actual paths to your files once you upload them to the repository!
 
-### Video Playback
-<div align="center">
-  <video src="link-to-video.mp4" width="800" controls></video>
-</div>
+
+
 
 ### UI Screenshot
-![UI Screenshot](link-to-screenshot.png)
+![UI Screenshot]([link-to-screenshot.png](https://s6.imgcdn.dev/YSuhYV.png))
 
 ## 🌟 Key Features
 
