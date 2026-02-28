@@ -1,1 +1,30 @@
+# Executables and libraries
 mpv.exe
+*.dll
+
+# Logs and debug files
+*.log
+*.txt
+
+# MPV specific auto-generated or state files
+watch_later/
+lua-settings/
+mpvHistory.log
+
+# Temporary files
+/tmp/
+*.tmp
+*.bak
+
+# Cache
+cache/
+
+# User specifically requested excluding "other unnecessary files"
+# We'll push configurations, scripts, script-opts, shaders, fonts, etc.
+# But keep original files folder out, if it's just backups
+original files/
+
+# OS generated files
+thumbs.db
+.DS_Store
+desktop.ini
