@@ -700,8 +700,26 @@ end
 
 ---@param shortcut? Shortcut
 function Menu:handle_cursor_up(shortcut)
-	if self.proximity_raw <= -self.padding and self.drag_last_y and not self.is_dragging then
-		self:activate_selected_item(shortcut, true)
+	-- Activate selected item on click (not drag). We check proximity and dragging state
+	-- rather than drag_last_y, since drag_last_y may not always be set under fast clicks.
+	if self.proximity_raw <= 0 and not self.is_dragging then
+		local menu = self.current
+		-- If selected_index is nil (fast-click race: hover-selection happens in render, but click
+		-- fires before the next render frame), compute it directly from cursor position.
+		if not menu.selected_index then
+			local content_top = menu.top
+			local rel_y = cursor.y - content_top + menu.scroll_y
+			local index = math.floor(rel_y / self.scroll_step) + 1
+			if index >= 1 and index <= #menu.items then
+				local item = menu.items[index]
+				if item and item.selectable ~= false then
+					menu.selected_index = index
+				end
+			end
+		end
+		if menu.selected_index then
+			self:activate_selected_item(shortcut, true)
+		end
 	end
 	if self.is_dragging then
 		local distance = cursor:get_velocity().y / -3
@@ -1370,6 +1388,7 @@ function Menu:render()
 	end
 
 	cursor:zone('primary_down', display, self:create_action(function() self:handle_cursor_down() end))
+	cursor:zone('secondary_down', display, self:create_action(function() self:close() end))
 	cursor:zone('primary_up', display, self:create_action(function(shortcut) self:handle_cursor_up(shortcut) end))
 	cursor:zone('wheel_down', self, function() self:handle_wheel_down() end)
 	cursor:zone('wheel_up', self, function() self:handle_wheel_up() end)

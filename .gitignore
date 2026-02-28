@@ -28,3 +28,7 @@ original files/
 thumbs.db
 .DS_Store
 desktop.ini
+
+# Archives and playlists
+mpv.rar
+playlists/

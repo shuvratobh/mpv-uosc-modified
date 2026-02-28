@@ -233,7 +233,7 @@ function Volume:update_dimensions()
 	self.ax = round(options.volume == 'left' and margin or display.width - margin - self.size)
 	self.ay = min_y + round((available_height - height) / 2)
 	self.bx = round(self.ax + self.size)
-	self.by = round(self.ay + height)
+	self.by = display.height - Elements:v('window_border', 'size', 0) - Elements:v('controls', 'size', 0) / 2 + height / 2
 	self.mute_ay = self.by - self.size
 	self.slider.enabled = self.enabled
 	self.slider:set_coordinates(self.ax, self.ay, self.bx, self.mute_ay)

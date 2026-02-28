@@ -60,9 +60,9 @@ function Timeline:update_dimensions()
 	self.font_size = math.floor(math.min((self.size + 60 * state.scale) * 0.2, self.size * 0.96) * options.font_scale)
 	local window_border_size = Elements:v('window_border', 'size', 0)
 	self.ax = window_border_size
-	self.ay = display.height - window_border_size - self.size - self.top_border
 	self.bx = display.width - window_border_size
-	self.by = display.height - window_border_size
+	self.by = display.height - window_border_size - (Elements:v('controls', 'size', 0) > 0 and Elements:v('controls', 'size', 0) + round(options.controls_margin * state.scale) or 0)
+	self.ay = self.by - self.size - self.top_border
 	self.width = self.bx - self.ax
 	self.chapter_size = math.max((self.by - self.ay) / 10, 3)
 	self.chapter_size_hover = self.chapter_size * 2
@@ -205,6 +205,30 @@ function Timeline:render()
 	local ass = assdraw.ass_new()
 	local progress_size = math.max(self.min_progress_size, self.progress_size)
 
+	-- Single smooth shadow: one rect extending off-screen on all sides except top.
+	-- The ASS \blur feathers only the visible top edge — no seams, no side bleed.
+	if visibility > 0 then
+		local win_border = Elements:v('window_border', 'size', 0)
+		local win_bottom = display.height - win_border
+		local controls_h = Elements:v('controls', 'size', 0) + Elements:v('controls', 'margin', 0) * 2
+		-- how far above the controls the fade should START becoming visible
+		local fade_start = self.by + round(controls_h * 0.1)
+		local blur_r = math.max(round(controls_h * 0.7), round(22 * state.scale))
+		local shadow_opacity = 0.92 * visibility --fade er blackness edit
+		local alpha_byte = math.floor((1 - shadow_opacity) * 255)
+		ass:new_event()
+		ass.text = ass.text .. string.format(
+			'{\\pos(0,0)\\an7\\blur%d\\bord0\\1c&H000000&\\1a&H%X&\\3a&HFF&\\4a&HFF&}',
+			blur_r, alpha_byte
+		)
+		ass:draw_start()
+		local ctrl_margin = round(options.controls_margin * state.scale)
+		local shadow_bottom = win_bottom - ctrl_margin
+		-- Extend left/right/bottom to cover controls area, stopping before the bottom margin gap
+		ass:rect_cw(-blur_r * 2, fade_start - blur_r, display.width + blur_r * 2, shadow_bottom + blur_r * 2)
+		ass:draw_stop()
+	end
+
 	-- Text opacity rapidly drops to 0 just before it starts overflowing, or before it reaches progress_size
 	local hide_text_below = math.max(self.font_size * 0.8, progress_size * 2)
 	local hide_text_ramp = hide_text_below / 2
@@ -235,10 +259,9 @@ function Timeline:render()
 	local fcy = fay + (size / 2)
 	local foreground_size = fby - fay
 
-	local base_thickness = math.max(1, round(0.5 * state.scale + 0.5 * state.scale * visibility))
-	local played_thickness = math.max(1, round(1 * state.scale + 1 * state.scale * visibility))
-	if base_thickness % 2 ~= 0 then base_thickness = base_thickness + 1 end
-	if played_thickness % 2 ~= 0 then played_thickness = played_thickness + 1 end
+	local base_thickness = 1.5 * state.scale
+	local played_thickness = 2 * state.scale
+
 
 	local time_ax = bax + 0.5
 	local time_width = bbx - bax - 1
@@ -251,7 +274,7 @@ function Timeline:render()
 	
 	-- Draw base right part
 	ass:rect(bax, fcy - base_thickness / 2, bbx, fcy + base_thickness / 2, {
-		color = bg, opacity = config.opacity.timeline, radius = base_thickness / 2
+		color = '4f7594', opacity = config.opacity.timeline, radius = base_thickness / 2
 	})
 
 	-- Youtube heatmap
@@ -269,15 +292,15 @@ function Timeline:render()
 	
 	-- Draw played progress
 	ass:rect(bax, fcy - played_thickness / 2, play_x, fcy + played_thickness / 2, {
-		color = 'ffff00', opacity = config.opacity.position, radius = played_thickness / 2
+		color = '008cfb', opacity = config.opacity.position, radius = played_thickness / 2
 	})
 
 	-- Draw handle pill
-	local handle_width = played_thickness + round(2 * state.scale * visibility)
-	local handle_height = played_thickness + round(6 * state.scale * visibility)
+	local handle_width = played_thickness + round(7 * state.scale)
+	local handle_height = played_thickness + round(7 * state.scale)
 	if visibility > 0.1 then
 		ass:rect(play_x - handle_width/2, fcy - handle_height/2, play_x + handle_width/2, fcy + handle_height/2, {
-			color = 'ffff00', opacity = config.opacity.position * (0.8 + 0.2 * visibility), radius = handle_width / 2
+			color = '008cfb', opacity = config.opacity.position * (0.8 + 0.2 * visibility), radius = handle_width / 2
 		})
 	end
 
@@ -289,7 +312,7 @@ function Timeline:render()
 				local ax = range[1] < 0.5 and bax or math.floor(t2x(range[1]))
 				local bx = range[2] > state.duration - 0.5 and bbx or math.ceil(t2x(range[2]))
 				ass:rect(ax, fcy - base_thickness / 2, bx, fcy + base_thickness / 2, {
-					color = 'ffffff', opacity = cache_opacity, radius = base_thickness / 2
+					color = '8e8f91', opacity = cache_opacity, radius = base_thickness / 2
 				})
 			end
 		end
@@ -373,7 +396,7 @@ function Timeline:render()
 				ass:new_event()
 				ass:append(string.format(
 					'{\\pos(0,0)\\rDefault\\an7\\blur0\\yshad0.01\\bord%f\\1c&H%s\\3c&H%s\\4c&H%s\\1a&H%X&\\3a&H00&\\4a&H00&}',
-					diamond_border, 'ffff00', bg, bg, opacity_to_alpha(config.opacity.chapters)
+					diamond_border, '008cfb', bg, bg, opacity_to_alpha(config.opacity.chapters)
 				))
 				ass:draw_start()
 				ass:move_to(x, fby - ab_radius)
@@ -433,11 +456,7 @@ function Timeline:render()
 	if (self.proximity_raw <= 0 or self.pressed or hovered_chapter) and not Elements:v('speed', 'dragging') then
 		local cursor_x = hovered_chapter and t2x(hovered_chapter.time) or cursor.x
 		local hovered_seconds = hovered_chapter and hovered_chapter.time or self:get_time_at_x(cursor.x)
-
-		-- Cursor line
-		local color = 'ffff00'
 		local ax, ay, bx, by = cursor_x - 0.5, fay, cursor_x + 0.5, fby
-		ass:rect(ax, ay, bx, by, {color = color, opacity = 0.33})
 		local tooltip_anchor = {ax = ax, ay = ay - self.top_border, bx = bx, by = by}
 
 		-- Timestamp

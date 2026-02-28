@@ -38,7 +38,9 @@ end
 ---@param opts? {color?: string; border?: number; border_color?: string; opacity?: number; clip?: string; align?: number}
 function ass_mt:icon(x, y, size, name, opts)
 	opts = opts or {}
-	opts.font, opts.size, opts.bold = 'MaterialIconsRound-Regular', size, false
+	-- Auto-detect font: Fluent codepoints start with a high byte (>127), Material names are ASCII (<=127)
+	local font = (name:byte(1) or 0) > 127 and 'fluent-system-icons' or 'MaterialIconsRound-Regular'
+	opts.font, opts.size, opts.bold = font, size, false
 	self:txt(x, y, opts.align or 5, name, opts)
 end
 
@@ -263,7 +265,8 @@ function ass_mt:spinner(x, y, size, opts)
 	opts = opts or {}
 	opts.rotate = (state.render_last_time * 1.75 % 1) * -360
 	opts.color = opts.color or fg
-	self:icon(x, y, size, 'autorenew', opts)
+	-- Use unicode rotate symbol instead of 'autorenew' ligature to prevent text artifact if font is missing
+	self:icon(x, y, size, '↻', opts)
 	request_render()
 end
 

@@ -35,29 +35,92 @@ end
 
 function Controls:init_options()
 	-- Serialize control elements
-	local shorthands = {
-		['play-pause'] = 'cycle:pause:pause:no/yes=play_arrow?' .. t('Play/Pause'),
-		menu = 'command:menu:script-binding uosc/menu-blurred?' .. t('Menu'),
-		subtitles = 'command:subtitles:script-binding uosc/subtitles#sub>0?' .. t('Subtitles'),
-		audio = 'command:graphic_eq:script-binding uosc/audio#audio>1?' .. t('Audio'),
-		['audio-device'] = 'command:speaker:script-binding uosc/audio-device?' .. t('Audio device'),
-		video = 'command:theaters:script-binding uosc/video#video>1?' .. t('Video'),
-		playlist = 'command:list_alt:script-binding uosc/playlist?' .. t('Playlist'),
-		chapters = 'command:bookmark:script-binding uosc/chapters#chapters>0?' .. t('Chapters'),
-		['editions'] = 'command:bookmarks:script-binding uosc/editions#editions>1?' .. t('Editions'),
-		['stream-quality'] = 'command:high_quality:script-binding uosc/stream-quality?' .. t('Stream quality'),
-		['open-file'] = 'command:file_open:script-binding uosc/open-file?' .. t('Open file'),
-		['items'] = 'command:list_alt:script-binding uosc/items?' .. t('Playlist/Files'),
-		prev = 'command:arrow_back_ios:script-binding uosc/prev?' .. t('Previous'),
-		next = 'command:arrow_forward_ios:script-binding uosc/next?' .. t('Next'),
-		first = 'command:first_page:script-binding uosc/first?' .. t('First'),
-		last = 'command:last_page:script-binding uosc/last?' .. t('Last'),
-		['loop-playlist'] = 'cycle:repeat:loop-playlist:no/inf!?' .. t('Loop playlist'),
-		['loop-file'] = 'cycle:repeat_one:loop-file:no/inf!?' .. t('Loop file'),
-		shuffle = 'toggle:shuffle:shuffle?' .. t('Shuffle'),
-		autoload = 'toggle:hdr_auto:autoload@uosc?' .. t('Autoload'),
-		fullscreen = 'cycle:crop_free:fullscreen:no/yes=fullscreen_exit!?' .. t('Fullscreen'),
+	-- Fluent System Icons codepoints (matching modernz.lua's icon_theme["fluent"])
+	local ic = string.char
+	local fi = {
+		play         = ic(238,166,143),
+		pause        = ic(238,163,140),
+		prev         = ic(239,152,167),
+		next         = ic(239,149,168),
+		first        = ic(238,168,158),  -- rewind (skip to start equivalent)
+		last         = ic(238,152,135),  -- forward (skip to end equivalent)
+		subtitles    = ic(238,175,141),
+		audio        = ic(238,175,139),
+		playlist     = ic(238,161,159),
+		menu         = ic(238,160,170),
+		chapters     = ic(239,133,156),  -- calendar_ltr (bookmark equivalent)
+		editions     = ic(239,133,156),  -- same
+		stream       = ic(239,160,177),  -- gauge (stream quality)
+		open_file    = ic(238,183,182),  -- folder_open
+		loop_off     = ic(239,133,178),
+		loop_on      = ic(239,133,181),
+		shuffle_off  = ic(238,188,188),
+		shuffle_on   = ic(238,188,184),
+		fullscreen   = ic(239,133,160),
+		fullscreen_x = ic(239,133,166),
+		speed        = ic(239,160,177),
+		jump_back    = ic(238,171,188),  -- jump_10_back
+		jump_fwd     = ic(238,172,129),  -- jump_10_forward
+		speaker      = ic(238,173,130),  -- volume_high
+		hdr          = ic(239,160,177),  -- speed (autoload)
 	}
+
+	local shorthands = {
+		['play-pause'] = 'cycle:' .. fi.pause .. ':pause:no/yes=' .. fi.play .. '?' .. t('Play/Pause'),
+		menu = 'command:' .. fi.menu .. ':script-binding uosc/menu-blurred?' .. t('Menu'),
+		subtitles = 'command:' .. fi.subtitles .. ':script-binding uosc/subtitles#sub>0?' .. t('Subtitles'),
+		audio = 'command:' .. fi.audio .. ':script-binding uosc/audio#audio>1?' .. t('Audio'),
+		['audio-device'] = 'command:' .. fi.speaker .. ':script-binding uosc/audio-device?' .. t('Audio device'),
+		video = 'command:' .. fi.stream .. ':script-binding uosc/video#video>1?' .. t('Video'),
+		playlist = 'command:' .. fi.playlist .. ':script-binding uosc/playlist?' .. t('Playlist'),
+		chapters = 'command:' .. fi.chapters .. ':script-binding uosc/chapters#chapters>0?' .. t('Chapters'),
+		['editions'] = 'command:' .. fi.editions .. ':script-binding uosc/editions#editions>1?' .. t('Editions'),
+		['stream-quality'] = 'command:' .. fi.stream .. ':script-binding uosc/stream-quality?' .. t('Stream quality'),
+		['open-file'] = 'command:' .. fi.open_file .. ':script-binding uosc/open-file?' .. t('Open file'),
+		['items'] = 'command:' .. fi.playlist .. ':script-binding uosc/items?' .. t('Playlist/Files'),
+		prev = 'command:' .. fi.prev .. ':script-binding uosc/prev?' .. t('Previous'),
+		next = 'command:' .. fi.next .. ':script-binding uosc/next?' .. t('Next'),
+		first = 'command:' .. fi.first .. ':script-binding uosc/first?' .. t('First'),
+		last = 'command:' .. fi.last .. ':script-binding uosc/last?' .. t('Last'),
+		['loop-playlist'] = 'cycle:' .. fi.loop_off .. ':loop-playlist:no/inf=' .. fi.loop_on .. '?' .. t('Loop playlist'),
+		['loop-file'] = 'cycle:' .. fi.loop_off .. ':loop-file:no/inf=' .. fi.loop_on .. '?' .. t('Loop file'),
+		shuffle = 'toggle:' .. fi.shuffle_off .. ':shuffle?' .. t('Shuffle'),
+		autoload = 'toggle:' .. fi.hdr .. ':autoload@uosc?' .. t('Autoload'),
+		fullscreen = 'cycle:' .. fi.fullscreen .. ':fullscreen:no/yes=' .. fi.fullscreen_x .. '?' .. t('Fullscreen'),
+		-- Custom jump shorthands (used in uosc.conf controls line)
+		replay_10 = 'command:' .. fi.jump_back .. ':seek -10?-10s',
+		forward_10 = 'command:' .. fi.jump_fwd .. ':seek +10?+10s',
+	}
+
+	-- Helper: cycle an mpv track forward/backward with wraparound
+	local function cycle_track(type, direction)
+		local track_list = mp.get_property_native('track-list', {})
+		local tracks = {}
+		for _, track in ipairs(track_list) do
+			if track.type == type then
+				tracks[#tracks + 1] = track
+			end
+		end
+		if #tracks == 0 then
+			mp.osd_message('No ' .. type .. ' tracks available', 2)
+			return
+		end
+		local current = mp.get_property_number(type, 0) or 0
+		local idx = 0
+		for i, t in ipairs(tracks) do
+			if t.id == current then idx = i; break end
+		end
+		local new_idx = ((idx - 1 + direction + #tracks) % #tracks) + 1
+		local new_track = tracks[new_idx]
+		mp.set_property_number(type, new_track.id)
+		-- Build display name for OSD
+		local label = new_track.title or new_track.lang or ('Track ' .. new_track.id)
+		if new_track.lang and new_track.title then
+			label = new_track.title .. ' [' .. new_track.lang .. ']'
+		end
+		local icon = type == 'sub' and '🔤' or '🔊'
+		mp.osd_message(icon .. ' ' .. label .. '  (' .. new_idx .. '/' .. #tracks .. ')', 2)
+	end
 
 	-- Parse out disposition/config pairs
 	local items = {}
@@ -135,11 +198,29 @@ function Controls:init_options()
 					'command button needs 2 parameters, %d received: %s', #params, table.concat(params, '/')
 				))
 			else
+				-- Special handling: subtitle and audio buttons use click/scroll-to-cycle
+				local icon = params[1]
+				local on_click_fn, on_wheel_up_fn, on_wheel_down_fn
+				if icon == fi.subtitles then
+					-- Left click: cycle to next subtitle track
+					on_click_fn = function() cycle_track('sub', 1) end
+					on_wheel_up_fn = function() cycle_track('sub', 1) end
+					on_wheel_down_fn = function() cycle_track('sub', -1) end
+				elseif icon == fi.audio then
+					-- Left click: cycle to next audio track
+					on_click_fn = function() cycle_track('audio', 1) end
+					on_wheel_up_fn = function() cycle_track('audio', 1) end
+					on_wheel_down_fn = function() cycle_track('audio', -1) end
+				else
+					on_click_fn = function() mp.command(params[2]) end
+				end
 				local element = Button:new('control_' .. i, {
 					render_order = self.render_order,
-					icon = params[1],
+					icon = icon,
 					anchor_id = 'controls',
-					on_click = function() mp.command(params[2]) end,
+					on_click = on_click_fn,
+					on_wheel_up = on_wheel_up_fn,
+					on_wheel_down = on_wheel_down_fn,
 					tooltip = tooltip,
 					count_prop = 'sub',
 				})
@@ -303,6 +384,8 @@ function Controls:update_dimensions()
 	local size = round(options.controls_size * state.scale)
 	local spacing = round(options.controls_spacing * state.scale)
 	local margin = round(options.controls_margin * state.scale)
+	self.size = size
+	self.margin = margin
 
 	-- Disable when not enough space
 	local available_space = display.height - window_border * 2 - Elements:v('top_bar', 'size', 0)
@@ -319,8 +402,8 @@ function Controls:update_dimensions()
 
 	-- Container
 	self.bx = display.width - window_border - margin
-	self.by = Elements:v('timeline', 'ay', display.height - window_border) - margin
-	self.ax, self.ay = window_border + margin, self.by - size
+	self.by = display.height - window_border - margin
+	self.ax, self.ay = window_border + margin, self.by - size - margin
 
 	-- Controls
 	local available_width, statics_width = self.bx - self.ax, 0

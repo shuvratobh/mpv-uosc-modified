@@ -20,6 +20,10 @@ function Button:init(id, props)
 	self.is_clickable = true
 	---@type fun()|nil
 	self.on_click = props.on_click
+	---@type fun()|nil
+	self.on_wheel_up = props.on_wheel_up
+	---@type fun()|nil
+	self.on_wheel_down = props.on_wheel_down
 	Element.init(self, id, props)
 end
 
@@ -37,20 +41,27 @@ function Button:render()
 	local visibility = self:get_visibility()
 	if visibility <= 0 then return end
 	cursor:zone('primary_down', self, function() self:handle_cursor_click() end)
+	-- Wheel scroll support
+	if self.on_wheel_up then
+		cursor:zone('wheel_up', self, function() self.on_wheel_up() end)
+	end
+	if self.on_wheel_down then
+		cursor:zone('wheel_down', self, function() self.on_wheel_down() end)
+	end
 
 	local ass = assdraw.ass_new()
 	local is_clickable = self.is_clickable and self.on_click ~= nil
 	local is_hover = self.proximity_raw <= 0
-	local foreground = self.active and self.background or self.foreground
-	local background = self.active and self.foreground or self.background
-	local background_opacity = self.active and 1 or config.opacity.controls
+	-- Active state: icon uses accent color, no background fill (matches ModernZ flat style)
+	local icon_color = self.active and config.color.accent or self.foreground
+	local background_opacity = self.active and 0 or config.opacity.controls
 
 	if is_hover and is_clickable and background_opacity < 0.3 then background_opacity = 0.3 end
 
-	-- Background
+	-- Background (hover only when not active)
 	if background_opacity > 0 then
 		ass:rect(self.ax, self.ay, self.bx, self.by, {
-			color = (self.active or not is_hover) and background or foreground,
+			color = is_hover and icon_color or self.background,
 			radius = state.radius,
 			opacity = visibility * background_opacity,
 		})
@@ -63,16 +74,16 @@ function Button:render()
 	local icon_clip
 	if self.badge then
 		local badge_font_size = self.font_size * 0.6
-		local badge_opts = {size = badge_font_size, color = background, opacity = visibility}
+		local badge_opts = {size = badge_font_size, color = self.background, opacity = visibility}
 		local badge_width = text_width(self.badge, badge_opts)
 		local width, height = math.ceil(badge_width + (badge_font_size / 7) * 2), math.ceil(badge_font_size * 0.93)
 		local bx, by = self.bx - 1, self.by - 1
 		ass:rect(bx - width, by - height, bx, by, {
-			color = foreground,
+			color = icon_color,
 			radius = state.radius,
 			opacity = visibility,
 			border = self.active and 0 or 1,
-			border_color = background,
+			border_color = self.background,
 		})
 		ass:txt(bx - width / 2, by - height / 2, 5, self.badge, badge_opts)
 
@@ -87,9 +98,9 @@ function Button:render()
 	-- Icon
 	local x, y = round(self.ax + (self.bx - self.ax) / 2), round(self.ay + (self.by - self.ay) / 2)
 	ass:icon(x, y, self.font_size, self.icon, {
-		color = foreground,
-		border = self.active and 0 or options.text_border * state.scale,
-		border_color = background,
+		color = icon_color,
+		border = options.text_border * state.scale,
+		border_color = self.background,
 		opacity = visibility,
 		clip = icon_clip,
 	})

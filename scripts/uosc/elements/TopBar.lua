@@ -30,9 +30,10 @@ function TopBar:init()
 		end
 	end
 
-	local close = {icon = 'close', hover_bg = '2311e8', hover_fg = 'ffffff', command = function() mp.command('quit') end}
-	local max = {icon = 'crop_square', command = maximized_command}
-	local min = {icon = 'minimize', command = function() mp.command('cycle window-minimized') end}
+	local ic = string.char
+	local close = {icon = ic(239,141,169), hover_bg = '2311e8', hover_fg = 'ffffff', command = function() mp.command('quit') end}
+	local max = {icon = ic(238,159,171), command = maximized_command}
+	local min = {icon = ic(238,175,144), command = function() mp.command('cycle window-minimized') end}
 	self.buttons = options.top_bar_controls == 'left' and {close, max, min} or {min, max, close}
 
 	self:register_observers()
