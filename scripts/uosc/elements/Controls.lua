@@ -201,11 +201,23 @@ function Controls:init_options()
 				-- Special handling: subtitle and audio buttons use click/scroll-to-cycle
 				local icon = params[1]
 				local on_click_fn, on_wheel_up_fn, on_wheel_down_fn
+				local on_right_click_fn
 				if icon == fi.subtitles then
 					-- Left click: cycle to next subtitle track
 					on_click_fn = function() cycle_track('sub', 1) end
 					on_wheel_up_fn = function() cycle_track('sub', 1) end
 					on_wheel_down_fn = function() cycle_track('sub', -1) end
+					-- Right click: open subtitle options context menu
+					on_right_click_fn = function()
+						open_command_menu({
+							type = 'subtitle-context',
+							items = {
+								{title = t('Subtitle tracks'), icon = 'subtitles', value = 'script-binding uosc/subtitles'},
+								{title = t('Load subtitle file…'), icon = 'open_in_new', value = 'script-binding uosc/load-subtitles'},
+								{title = t('Download subtitles…'), icon = 'download', value = 'script-binding uosc/download-subtitles'},
+							},
+						}, {mouse_nav = true})
+					end
 				elseif icon == fi.audio then
 					-- Left click: cycle to next audio track
 					on_click_fn = function() cycle_track('audio', 1) end
@@ -219,6 +231,7 @@ function Controls:init_options()
 					icon = icon,
 					anchor_id = 'controls',
 					on_click = on_click_fn,
+					on_right_click = on_right_click_fn,
 					on_wheel_up = on_wheel_up_fn,
 					on_wheel_down = on_wheel_down_fn,
 					tooltip = tooltip,

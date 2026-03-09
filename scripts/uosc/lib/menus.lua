@@ -192,7 +192,7 @@ function create_self_updating_menu_opener(opts)
 				opts.on_move(event --[[@as MenuEventMove]])
 			elseif event.type == 'remove' and opts.on_move then
 			end
-		end)
+		end, {mouse_nav = true})
 
 		mp.observe_property(opts.list_prop, 'native', handle_list_prop_change)
 		if opts.active_prop then
@@ -554,7 +554,7 @@ function open_file_navigation_menu(directory_path, handle_activate, opts)
 		elseif event.type == 'close' then
 			close()
 		end
-	end)
+	end, {mouse_nav = true})
 
 	open_directory(directory_path)
 

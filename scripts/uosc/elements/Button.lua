@@ -21,6 +21,8 @@ function Button:init(id, props)
 	---@type fun()|nil
 	self.on_click = props.on_click
 	---@type fun()|nil
+	self.on_right_click = props.on_right_click
+	---@type fun()|nil
 	self.on_wheel_up = props.on_wheel_up
 	---@type fun()|nil
 	self.on_wheel_down = props.on_wheel_down
@@ -41,6 +43,10 @@ function Button:render()
 	local visibility = self:get_visibility()
 	if visibility <= 0 then return end
 	cursor:zone('primary_down', self, function() self:handle_cursor_click() end)
+	-- Right-click support
+	if self.on_right_click then
+		cursor:zone('secondary_down', self, function() mp.add_timeout(0.01, self.on_right_click) end)
+	end
 	-- Wheel scroll support
 	if self.on_wheel_up then
 		cursor:zone('wheel_up', self, function() self.on_wheel_up() end)
